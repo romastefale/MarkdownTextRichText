@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>MDTXTRT</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brandrow"><strong>MDTXTRT</strong><span id="draftName" class="draft-name"></span></div>
+  <div class="top-actions">
+    <button id="btnDrafts" class="icon-btn" type="button" aria-label="Rascunhos" title="Rascunhos">☰</button>
+    <button id="btnImport" class="icon-btn" type="button" aria-label="Importar" title="Importar">↥</button>
+    <button id="btnUndo" class="icon-btn" type="button" aria-label="Desfazer" title="Desfazer">↶</button>
+    <button id="btnRedo" class="icon-btn" type="button" aria-label="Refazer" title="Refazer">↷</button>
+  </div>
+</header>
+<nav id="toolbar" class="toolbar" aria-label="Formatação">
+  <div class="toolgroup" data-group="texto">
+    <button data-inline="strong" title="Negrito"><b>B</b></button>
+    <button data-inline="em" title="Itálico"><i>I</i></button>
+    <button data-inline="u" title="Sublinhado"><u>U</u></button>
+    <button data-inline="s" title="Riscado"><s>S</s></button>
+    <button data-inline="code" title="Código inline">&lt;/&gt;</button>
+    <button data-inline="mark" title="Marcado">Aa</button>
+    <button data-inline="tg-spoiler" title="Spoiler">◫</button>
+    <button data-action="link" title="Link">⌁</button>
+  </div>
+  <div class="toolgroup" data-group="estrutura">
+    <button data-block="heading" title="Título">H</button>
+    <button data-block="blockquote" title="Citação">❝</button>
+    <button data-block="details" title="Detalhes">▾</button>
+    <button data-block="code" title="Bloco de código">{ }</button>
+    <button data-block="list" title="Lista">≡</button>
+    <button data-block="table" title="Tabela">▦</button>
+    <button data-block="media" title="Mídia">▧</button>
+    <button data-block="map" title="Mapa">⌖</button>
+    <button data-block="buttons" title="Botões">▭</button>
+    <button data-block="divider" title="Divisor">—</button>
+  </div>
+</nav>
+<main>
+  <section id="sessionBanner" class="banner hidden"></section>
+  <section id="editor" class="editor" aria-label="Editor Rich"></section>
+  <button id="btnAddParagraph" class="add-paragraph" type="button">+ texto</button>
+</main>
+<footer class="bottom-actions">
+  <button data-output="markdown" type="button">Markdown</button>
+  <button data-output="txt" type="button">TXT</button>
+  <button data-output="telegraph" type="button">Telegraph</button>
+  <button data-output="telegram" class="primary" type="button">Telegram</button>
+</footer>
+<input id="importFile" type="file" accept=".md,.txt,text/markdown,text/plain" hidden>
+<input id="mediaFile" type="file" hidden>
+<div id="toast" class="toast hidden"><span id="toastText"></span><button id="toastUndo" type="button">Desfazer</button></div>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><strong id="modalTitle"></strong><button id="modalClose" class="icon-btn" type="button">×</button></div><div id="modalBody" class="modal-body"></div></div></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
