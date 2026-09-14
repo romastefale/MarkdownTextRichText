@@ -22,7 +22,7 @@ jobs:
       - name: Reconstruct verified release tree
         run: |
           set -euo pipefail
-          base64 -d .release/mdtxtrt-release.b64 > /tmp/mdtxtrt-release.tar.xz
+          cat .release/part00 .release/part01 .release/part02 .release/part03 .release/part04 .release/part05 | base64 -d > /tmp/mdtxtrt-release.tar.xz
           echo 'c91aa747e32560eeabf4fc0ae7ea186428bc4f3f58a4d5a15a7d9a3b1dea3831  /tmp/mdtxtrt-release.tar.xz' | sha256sum -c -
           tar -xJf /tmp/mdtxtrt-release.tar.xz -C .
 
