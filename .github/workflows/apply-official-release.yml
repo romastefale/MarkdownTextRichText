@@ -1,6 +1,9 @@
 name: Apply MDTXTRT official release tree
 
 on:
+  push:
+    branches:
+      - feat/mdtxtrt-official-release
   workflow_dispatch:
 
 permissions:
@@ -19,9 +22,22 @@ jobs:
       - name: Reconstruct verified release tree
         run: |
           set -euo pipefail
-          cat .release/part00 .release/part01 .release/part02 .release/part03 .release/part04 | base64 -d > /tmp/mdtxtrt-release.tar.xz
-          echo 'bb6f3c2f2ed3a59dd1df5d232341ecea7421002f3934b7f259d9e441dd6396b0  /tmp/mdtxtrt-release.tar.xz' | sha256sum -c -
+          cat .release/part00 .release/part01 .release/part02 .release/part03 .release/part04 .release/part05 | base64 -d > /tmp/mdtxtrt-release.tar.xz
+          echo 'c91aa747e32560eeabf4fc0ae7ea186428bc4f3f58a4d5a15a7d9a3b1dea3831  /tmp/mdtxtrt-release.tar.xz' | sha256sum -c -
           tar -xJf /tmp/mdtxtrt-release.tar.xz -C .
+
+      - name: Apply verified aiogram model correction to release gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/release_gate.py')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('RichBlockTableCell(text="Recurso", is_header=True)', 'RichBlockTableCell(align="left", valign="middle", text="Recurso", is_header=True)')
+          s = s.replace('RichBlockTableCell(text="Disponível", is_header=True)', 'RichBlockTableCell(align="center", valign="middle", text="Disponível", is_header=True)')
+          s = s.replace('RichBlockTableCell(text="Tabela")', 'RichBlockTableCell(align="left", valign="middle", text="Tabela")')
+          s = s.replace('RichBlockTableCell(text="Sim")', 'RichBlockTableCell(align="center", valign="middle", text="Sim")')
+          p.write_text(s, encoding='utf-8')
+          PY
 
       - uses: actions/setup-python@v5
         with:
