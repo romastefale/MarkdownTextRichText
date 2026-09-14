@@ -44,7 +44,7 @@ jobs:
           node --check mdtxtrt/static/release.js
 
       - name: Run internal integration gate
-        run: python scripts/release_gate.py
+        run: PYTHONPATH=. python scripts/release_gate.py
 
       - name: Start application and verify healthcheck
         env:
