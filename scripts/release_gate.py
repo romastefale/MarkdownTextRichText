@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import base64
+import os
 from pathlib import Path
+from unittest.mock import patch
 
 from aiogram.types import (
     InputRichBlockButtons,
@@ -20,6 +23,7 @@ from aiogram.types import (
 )
 
 from mdtxtrt.conversion.traditional import traditional_compatibility
+from mdtxtrt.config import load_settings
 from mdtxtrt.services.conversion import review, select_telegram_mode
 from mdtxtrt.telegram.bot import TelegramRuntime
 from mdtxtrt.telegram.message import build_input_rich_message
@@ -137,9 +141,18 @@ def validate_static_contract():
     assert "font-size:16px" in css.replace(" ", "")
 
 
+def validate_simple_environment_names():
+    encoded_key = base64.b64encode(b"k" * 32).decode("ascii")
+    with patch.dict(os.environ, {"TOKEN": "bot123:test", "KEY": encoded_key}, clear=True):
+        settings = load_settings()
+    assert settings.telegram_token == "123:test"
+    assert settings.telegraph_aes_key == b"k" * 32
+
+
 if __name__ == "__main__":
     validate_aiogram_models()
     validate_render_selection()
     validate_dispatcher()
     validate_static_contract()
+    validate_simple_environment_names()
     print("release gate: OK")

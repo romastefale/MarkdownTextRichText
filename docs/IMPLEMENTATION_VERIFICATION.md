@@ -44,8 +44,8 @@ A issue #4 preserva o histórico dessas correções.
 
 ## Pendências externas
 
-- o serviço oficial não possui `TELEGRAM_TOKEN`; por isso o bot permanece desativado;
-- `TELEGRAPH_AES_KEY_B64` não está configurada; por isso tokens Telegraph não podem ser persistidos com AES-256-GCM;
+- o serviço oficial não possui `TOKEN`; por isso o bot permanece desativado;
+- `KEY` não está configurada; por isso tokens Telegraph não podem ser persistidos com AES-256-GCM;
 - E2E Telegram e QA móvel real somente podem ser marcados após essas configurações e uma sessão real.
 
 ## Regra de status

@@ -24,6 +24,6 @@ Não foi escolhida uma versão antiga do aiogram porque 3.31.0 é a versão est�
 
 ## Limite externo
 
-O código do produto está concluído no escopo contratado. A operação real do bot não pode ser validada enquanto `TELEGRAM_TOKEN` não existir no serviço Railway. A persistência segura de tokens Telegraph também exige `TELEGRAPH_AES_KEY_B64`. E2E Telegram e QA móvel permanecem não comprovados até a configuração dessas credenciais e o teste em cliente real.
+O código do produto está concluído no escopo contratado. A operação real do bot não pode ser validada enquanto `TOKEN` não existir no serviço Railway. A persistência segura de tokens Telegraph também exige `KEY`. E2E Telegram e QA móvel permanecem não comprovados até a configuração dessas credenciais e o teste em cliente real.
 
 Nenhum merge foi realizado.
