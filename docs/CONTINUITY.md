@@ -27,3 +27,7 @@ Esta versão usa como base física o snapshot persistido `MDTXTRT-rebuild-v2-202
 ## Verificação desta versão
 
 Somente verificações mecânicas de sintaxe/estrutura foram executadas localmente. Não há alegação de validação ponta a ponta com Telegram, Telegraph ou Railway nesta versão.
+
+## Cronologia posterior
+
+- 2026-09-15 — versão `restore/deleted-artifacts-v3`: restaurados, sem alterar as versões anteriores, os 22 arquivos removidos pelos commits `58bdb38d297eddd8a6df5fbafafcfbfa08c60704`, `ad4321cb3bbc980b0c80e599ab802727b023676f` e `c9fe6fb12915d06338d6685907e2c205143300a7`. A proveniência e as verificações constam em `docs/RESTORATION_2026-09-15.md`.
