@@ -13,9 +13,9 @@ Este documento separa estados que não podem ser tratados como equivalentes.
 
 Um nível não implica automaticamente o seguinte.
 
-## Estado atual
+## Estado atual — 2026-09-15
 
-### Materializado e verificado mecanicamente
+### Materializado, verificado mecanicamente e integrado localmente
 
 - checkpoint `2026-09-13-v2` materializado na branch `feat/mdtxtrt-implementation`;
 - modelo semântico e renderizadores presentes;
@@ -24,23 +24,29 @@ Um nível não implica automaticamente o seguinte.
 - 26 arquivos Python passaram em análise sintática durante a materialização;
 - `mdtxtrt/static/app.js` passou em `node --check` durante a materialização;
 - hashes do manifesto do checkpoint foram conferidos.
+- gate interno oficial executado com sucesso em Python 3.12.14, aiogram 3.31.0 e Bot API 10.3;
+- modelos Rich Message, seleção de renderizador, handlers, contrato estático e sintaxe JavaScript aprovados;
+- aplicação iniciada localmente e `/health` respondeu com `ok: true`.
 
-Esses fatos não comprovam integração, E2E, QA móvel nem deploy funcional.
+O deploy oficial existente no Railway está em estado `SUCCESS`, com build, startup e healthcheck aprovados. Esses fatos não comprovam E2E Telegram nem QA móvel real.
 
-## Divergências de aderência identificadas
+## Divergências de aderência resolvidas
 
-Antes de promover o produto para validação final, permanecem correções próprias de implementação:
+O gate atual comprovou a implementação das correções anteriormente registradas:
 
-- interface visual ainda diverge do contrato em accent e uso de controles nativos;
-- H1/H2/H3 não estão expostos como três ações independentes;
-- integração de BackButton, botão inferior nativo, safe areas e viewport estável precisa ser completada;
-- prévia precisa usar o mesmo pipeline final de renderização/envio;
-- `/converter` precisa consumir uma mensagem textual subsequente quando estiver em `waiting_text`;
-- `/formatos` precisa demonstrar estruturas Rich reais;
-- botão global deve usar o mecanismo Rich apropriado quando suportado e fallback compatível quando não;
-- documentação e código precisam manter a distinção entre `InputRichMessage.blocks`, `InputRichMessage.markdown`, `InputRichMessage.html` e os formatos tradicionais HTML/MarkdownV2.
+- accent laranja, H1/H2/H3, controles nativos, safe areas e viewport estável;
+- prévia e envio usando o mesmo classificador;
+- `/converter` com estado `waiting_text` e `/formatos` com estruturas Rich;
+- botão Rich com fallback tradicional;
+- distinção entre Blocks, Rich Markdown, Rich HTML, HTML tradicional e MarkdownV2.
 
-A issue #4 controla essas correções.
+A issue #4 preserva o histórico dessas correções.
+
+## Pendências externas
+
+- o serviço oficial não possui `TOKEN`; por isso o bot permanece desativado;
+- `KEY` não está configurada; por isso tokens Telegraph não podem ser persistidos com AES-256-GCM;
+- E2E Telegram e QA móvel real somente podem ser marcados após essas configurações e uma sessão real.
 
 ## Regra de status
 
