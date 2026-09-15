@@ -18,7 +18,7 @@ class Settings:
     init_data_ttl_seconds: int
     telegraph_aes_key: bytes | None
     static_path: Path
-    max_upload_bytes: int
+    max_upload_bytes: int = DEFAULT_MAX_UPLOAD_BYTES
 
 
 def _token(raw: str) -> str:
