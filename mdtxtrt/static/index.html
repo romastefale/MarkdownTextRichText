@@ -6,80 +6,57 @@
 <meta name="color-scheme" content="light dark">
 <title>MDTXTRT</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="stylesheet" href="/static/release.css">
+<link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div id="app" class="app-shell">
-  <section class="document-bar" aria-label="Documento">
-    <div class="document-meta">
-      <strong id="draftName" class="document-name">Novo documento</strong>
-      <span id="saveState" class="save-state" aria-live="polite">local</span>
-    </div>
-    <div class="view-switch" role="tablist" aria-label="Modo">
-      <button id="editTab" type="button" role="tab" aria-selected="true" class="active">Editar</button>
-      <button id="previewTab" type="button" role="tab" aria-selected="false">Prévia</button>
-    </div>
-  </section>
-
-  <section id="sessionBanner" class="banner hidden" aria-live="polite"></section>
-
-
-  <main id="workspace" class="workspace">
-    <section id="editorPane" class="pane" aria-label="Editor">
-      <div id="editor" class="editor"></div>
-      <button id="addParagraph" class="add-paragraph" type="button">+ texto</button>
-    </section>
-
-    <section id="previewPane" class="pane hidden" aria-label="Prévia Telegram">
-      <div class="preview-header">
-        <div>
-          <strong>Prévia Telegram</strong>
-          <span id="mechanismBadge" class="mechanism-badge">Aguardando</span>
-        </div>
-        <button id="refreshPreview" type="button">Atualizar</button>
-      </div>
-      <article id="telegramPreview" class="telegram-preview"></article>
-      <section id="previewWarnings" class="preview-warnings hidden"></section>
-      <details id="technicalPreview" class="technical-preview">
-        <summary>Projeção técnica</summary>
-        <pre id="projectionText"></pre>
-      </details>
-    </section>
-  </main>
-  <nav id="toolbar" class="toolbar" aria-label="Formatação">
-    <button type="button" data-heading="1" aria-label="Título 1">H1</button>
-    <button type="button" data-heading="2" aria-label="Título 2">H2</button>
-    <button type="button" data-heading="3" aria-label="Título 3">H3</button>
-    <span class="separator" aria-hidden="true"></span>
-    <button type="button" data-inline="strong" aria-label="Negrito"><strong>B</strong></button>
-    <button type="button" data-inline="em" aria-label="Itálico"><em>I</em></button>
-    <button type="button" data-inline="u" aria-label="Sublinhado"><u>U</u></button>
-    <button type="button" data-block="list" aria-label="Lista">≡</button>
-    <button type="button" data-block="blockquote" aria-label="Citação">❝</button>
-    <button type="button" data-action="link" aria-label="Link">⌁</button>
-    <button type="button" data-inline="code" aria-label="Código">&lt;/&gt;</button>
-    <button id="moreButton" type="button" aria-label="Mais opções">+</button>
-  </nav>
-</div>
-
+<header class="topbar">
+  <div class="brandrow"><strong>MDTXTRT</strong><span id="draftName" class="draft-name"></span></div>
+  <div class="top-actions">
+    <button id="btnDrafts" class="icon-btn" type="button" aria-label="Rascunhos" title="Rascunhos">☰</button>
+    <button id="btnImport" class="icon-btn" type="button" aria-label="Importar" title="Importar">↥</button>
+    <button id="btnUndo" class="icon-btn" type="button" aria-label="Desfazer" title="Desfazer">↶</button>
+    <button id="btnRedo" class="icon-btn" type="button" aria-label="Refazer" title="Refazer">↷</button>
+  </div>
+</header>
+<nav id="toolbar" class="toolbar" aria-label="Formatação">
+  <div class="toolgroup" data-group="texto">
+    <button data-inline="strong" title="Negrito"><b>B</b></button>
+    <button data-inline="em" title="Itálico"><i>I</i></button>
+    <button data-inline="u" title="Sublinhado"><u>U</u></button>
+    <button data-inline="s" title="Riscado"><s>S</s></button>
+    <button data-inline="code" title="Código inline">&lt;/&gt;</button>
+    <button data-inline="mark" title="Marcado">Aa</button>
+    <button data-inline="tg-spoiler" title="Spoiler">◫</button>
+    <button data-action="link" title="Link">⌁</button>
+  </div>
+  <div class="toolgroup" data-group="estrutura">
+    <button data-block="heading" title="Título">H</button>
+    <button data-block="blockquote" title="Citação">❝</button>
+    <button data-block="details" title="Detalhes">▾</button>
+    <button data-block="code" title="Bloco de código">{ }</button>
+    <button data-block="list" title="Lista">≡</button>
+    <button data-block="table" title="Tabela">▦</button>
+    <button data-block="media" title="Mídia">▧</button>
+    <button data-block="map" title="Mapa">⌖</button>
+    <button data-block="buttons" title="Botões">▭</button>
+    <button data-block="divider" title="Divisor">—</button>
+  </div>
+</nav>
+<main>
+  <section id="sessionBanner" class="banner hidden"></section>
+  <section id="editor" class="editor" aria-label="Editor Rich"></section>
+  <button id="btnAddParagraph" class="add-paragraph" type="button">+ texto</button>
+</main>
+<footer class="bottom-actions">
+  <button data-output="markdown" type="button">Markdown</button>
+  <button data-output="txt" type="button">TXT</button>
+  <button data-output="telegraph" type="button">Telegraph</button>
+  <button data-output="telegram" class="primary" type="button">Telegram</button>
+</footer>
 <input id="importFile" type="file" accept=".md,.txt,text/markdown,text/plain" hidden>
 <input id="mediaFile" type="file" hidden>
-
-<div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-  <div class="modal-card">
-    <header class="modal-head">
-      <strong id="modalTitle"></strong>
-      <button id="modalClose" type="button" aria-label="Fechar">×</button>
-    </header>
-    <div id="modalBody" class="modal-body"></div>
-  </div>
-</div>
-
-<div id="toast" class="toast hidden" aria-live="polite">
-  <span id="toastText"></span>
-  <button id="toastUndo" type="button">Desfazer</button>
-</div>
-
-<script src="/static/release.js"></script>
+<div id="toast" class="toast hidden"><span id="toastText"></span><button id="toastUndo" type="button">Desfazer</button></div>
+<div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-card"><div class="modal-head"><strong id="modalTitle"></strong><button id="modalClose" class="icon-btn" type="button">×</button></div><div id="modalBody" class="modal-body"></div></div></div>
+<script src="/static/app.js"></script>
 </body>
 </html>

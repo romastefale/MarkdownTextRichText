@@ -13,7 +13,7 @@ class AuthError(PermissionError):
 
 def validate_init_data(token: str, init_data: str, *, ttl_seconds: int = 3600) -> dict:
     if not token:
-        raise AuthError("TOKEN ausente no servidor.")
+        raise AuthError("TELEGRAM_TOKEN ausente no servidor.")
     raw = (init_data or "").strip()
     if not raw:
         raise AuthError("Abra o Web App pelo Telegram para validar a sessão.")

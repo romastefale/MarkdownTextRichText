@@ -18,7 +18,7 @@ class TelegraphService:
 
     def _cipher(self) -> AESGCM:
         if self.aes_key is None:
-            raise RuntimeError("KEY ausente; publicação editável no Telegraph está indisponível.")
+            raise RuntimeError("TELEGRAPH_AES_KEY_B64 ausente; publicação editável no Telegraph está indisponível.")
         return AESGCM(self.aes_key)
 
     def _encrypt(self, token: str, user_id: int) -> tuple[bytes, bytes]:

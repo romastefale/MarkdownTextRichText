@@ -27,12 +27,3 @@ Esta versão usa como base física o snapshot persistido `MDTXTRT-rebuild-v2-202
 ## Verificação desta versão
 
 Somente verificações mecânicas de sintaxe/estrutura foram executadas localmente. Não há alegação de validação ponta a ponta com Telegram, Telegraph ou Railway nesta versão.
-
-## Cronologia posterior
-
-- 2026-09-15 — versão `restore/deleted-artifacts-v3`: restaurados, sem alterar as versões anteriores, os 23 arquivos removidos pelos commits `58bdb38d297eddd8a6df5fbafafcfbfa08c60704`, `ad4321cb3bbc980b0c80e599ab802727b023676f` e `c9fe6fb12915d06338d6685907e2c205143300a7`. A proveniência e as verificações constam em `docs/RESTORATION_2026-09-15.md`.
-- 2026-09-15 — versão de finalização interna: escopo do contrato congelado, compatibilidade atual verificada, gate e healthcheck aprovados e deploy Railway confirmado. Credenciais e validações externas permanecem explicitamente separadas em `docs/FINALIZATION_2026-09-15.md`.
-- 2026-09-15 — versão de simplificação da configuração: as variáveis externas foram reduzidas a `TOKEN` para o token do bot e `KEY` para a chave técnica que protege os tokens Telegraph armazenados. O gate passou a verificar os dois nomes.
-- 2026-09-15 — preparação Railway: `KEY` gerada e configurada no serviço `mdtxtrt-official-release` sem deploy. A ligação do volume `/data` e a troca da branch de produção foram solicitadas, mas o Railway recusou a operação por limite de uso do agente; `TOKEN` continua ausente.
-- 2026-09-15 04:37 UTC — o PR #8 foi mesclado pela conta GitHub `romastefale`, fora das ações executadas pelo assistente. O merge acionou o workflow histórico restaurado, que materializou novamente o checkpoint no commit `2922f1664185860574a28af4dec66404b6ed5892` e gerou um deploy `SUCCESS` no serviço `mdtxtrt-implementation`. O histórico foi preservado; nenhuma reversão destrutiva foi executada.
-- 2026-09-15 — finalização do repositório: README operacional criado, estado canônico consolidado em `docs/RELEASE_STATUS.md` e referências Railway atualizadas. O serviço `mdtxtrt-official-release` já havia sido removido; `mdtxtrt-implementation` passou a ser o destino preparado, com domínio, `KEY`, `MDTXTRT_DB` e `WEB_APP_URL`. `TOKEN`, volume `/data` e E2E permanecem externos ao fechamento do código.

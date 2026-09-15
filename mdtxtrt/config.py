@@ -25,22 +25,22 @@ def _token(raw: str) -> str:
 
 
 def _telegraph_key() -> bytes | None:
-    encoded = (os.environ.get("KEY") or "").strip()
+    encoded = (os.environ.get("TELEGRAPH_AES_KEY_B64") or "").strip()
     if not encoded:
         return None
     try:
         key = base64.b64decode(encoded, validate=True)
     except Exception as exc:
-        raise RuntimeError("KEY precisa ser Base64 válido.") from exc
+        raise RuntimeError("TELEGRAPH_AES_KEY_B64 precisa ser Base64 válido.") from exc
     if len(key) != 32:
-        raise RuntimeError("KEY precisa decodificar exatamente 32 bytes.")
+        raise RuntimeError("TELEGRAPH_AES_KEY_B64 precisa decodificar exatamente 32 bytes.")
     return key
 
 
 def load_settings() -> Settings:
     package = Path(__file__).resolve().parent
     return Settings(
-        telegram_token=_token(os.environ.get("TOKEN", "")),
+        telegram_token=_token(os.environ.get("TELEGRAM_TOKEN", "")),
         web_app_url=(os.environ.get("WEB_APP_URL") or "").strip().rstrip("/"),
         port=int(os.environ.get("PORT", "8080")),
         database_path=Path(os.environ.get("MDTXTRT_DB", "/data/mdtxtrt.sqlite3")),
