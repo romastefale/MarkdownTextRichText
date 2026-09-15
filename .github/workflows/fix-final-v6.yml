@@ -1,0 +1,98 @@
+name: Apply and verify final v6 fixes
+on:
+  workflow_dispatch:
+  push:
+    branches: [release/mdtxtrt-final-v6]
+permissions:
+  contents: write
+jobs:
+  fix-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply targeted corrections
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if old not in text:
+                  raise SystemExit(f'expected source not found in {path}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace('mdtxtrt/telegram/bot.py',
+          '''        buffer = io.BytesIO()\n        await self.bot.download(message.document, destination=buffer, timeout=60)\n        raw = buffer.getvalue()\n        if not raw:\n            raise ValueError("Arquivo vazio.")\n        document = message.document\n''',
+          '''        document = message.document\n        limit = int(self.settings.max_upload_bytes)\n        if document.file_size is not None and int(document.file_size) > limit:\n            raise ValueError(f"Arquivo excede o limite de {limit} bytes.")\n\n        class LimitedBuffer(io.BytesIO):\n            def write(self, data):\n                if self.tell() + len(data) > limit:\n                    raise ValueError(f"Arquivo excede o limite de {limit} bytes.")\n                return super().write(data)\n\n        buffer = LimitedBuffer()\n        await self.bot.download(document, destination=buffer, timeout=60)\n        raw = buffer.getvalue()\n        if not raw:\n            raise ValueError("Arquivo vazio.")\n''')
+
+          replace('mdtxtrt/static/release.js',
+          '''function createLink() {\n  const block = selectedBlock(); const editableNode = block && block.querySelector('[contenteditable=true]')\n  if (!editableNode) return\n  const url = prompt('URL')\n  if (!url) return\n  editableNode.focus(); document.execCommand('createLink', false, url)\n  editableNode.dispatchEvent(new InputEvent('input', {bubbles: true}))\n}\n''',
+          '''function restoreSavedSelection(editableNode) {\n  editableNode.focus()\n  if (!savedTextRange || !editableNode.contains(savedTextRange.commonAncestorContainer)) return false\n  const selection = window.getSelection()\n  selection.removeAllRanges()\n  selection.addRange(savedTextRange)\n  return true\n}\n\nfunction createLink() {\n  const block = selectedBlock(); const editableNode = block && block.querySelector('[contenteditable=true]')\n  if (!editableNode) return\n  rememberSelection()\n  const url = prompt('URL')\n  if (!url) return\n  restoreSavedSelection(editableNode)\n  document.execCommand('createLink', false, url)\n  editableNode.dispatchEvent(new InputEvent('input', {bubbles: true}))\n}\n''')
+
+          replace('mdtxtrt/static/release.js',
+          '''function clearFormatting() {\n  const block = selectedBlock(); const editableNode = block && block.querySelector('[contenteditable=true]')\n  if (!editableNode) return\n  editableNode.focus(); document.execCommand('removeFormat', false)\n  editableNode.querySelectorAll('a').forEach(a => a.replaceWith(document.createTextNode(a.textContent || '')))\n  editableNode.dispatchEvent(new InputEvent('input', {bubbles: true}))\n}\n''',
+          '''function clearFormatting() {\n  const block = selectedBlock(); const editableNode = block && block.querySelector('[contenteditable=true]')\n  if (!editableNode) return\n  restoreSavedSelection(editableNode)\n  document.execCommand('removeFormat', false)\n  const selection = window.getSelection()\n  if (selection && selection.rangeCount) {\n    const range = selection.getRangeAt(0)\n    editableNode.querySelectorAll('a').forEach(a => {\n      if (range.intersectsNode(a)) a.replaceWith(document.createTextNode(a.textContent || ''))\n    })\n  }\n  editableNode.dispatchEvent(new InputEvent('input', {bubbles: true}))\n}\n''')
+
+          start = '''function findReplace() {\n'''
+          end = '''\nasync function createCurrentDraft() {'''
+          p = Path('mdtxtrt/static/release.js')
+          text = p.read_text(encoding='utf-8')
+          a = text.index(start)
+          b = text.index(end, a)
+          new = '''function replaceVisibleText(html, find, replacement) {\n  const root = document.createElement('div')\n  root.innerHTML = html || ''\n  let count = 0\n  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)\n  const textNodes = []\n  while (walker.nextNode()) textNodes.push(walker.currentNode)\n  textNodes.forEach(node => {\n    if (!node.nodeValue.includes(find)) return\n    count += node.nodeValue.split(find).length - 1\n    node.nodeValue = node.nodeValue.split(find).join(replacement)\n  })\n  return {html: root.innerHTML, count}\n}\n\nfunction findReplace() {\n  const form = document.createElement('form'); form.className = 'form'\n  form.innerHTML = '<label>Localizar<input name="find"></label><label>Substituir por<input name="replace"></label><div class="row"><button type="button" data-cancel>Cancelar</button><button class="primary" type="submit">Substituir</button></div>'\n  form.querySelector('[data-cancel]').onclick = closeModal\n  form.onsubmit = event => {\n    event.preventDefault(); const data = new FormData(form); const find = String(data.get('find') || ''); const replacement = String(data.get('replace') || '')\n    if (!find) return\n    let count = 0\n    const replaceHtmlField = (object, key) => {\n      if (!object || typeof object[key] !== 'string') return\n      const result = replaceVisibleText(object[key], find, replacement)\n      object[key] = result.html; count += result.count\n    }\n    const replacePlainField = (object, key) => {\n      if (!object || typeof object[key] !== 'string' || !object[key].includes(find)) return\n      count += object[key].split(find).length - 1\n      object[key] = object[key].split(find).join(replacement)\n    }\n    nodes().forEach(node => {\n      replaceHtmlField(node, 'html')\n      replaceHtmlField(node, 'summary_html')\n      for (const key of ['text', 'expression', 'raw']) replacePlainField(node, key)\n      if (node.type === 'list') (node.items || []).forEach(item => replaceHtmlField(item, 'html'))\n      if (node.type === 'buttons') (node.items || []).forEach(item => replaceHtmlField(item, 'html'))\n      if (node.type === 'table') (node.rows || []).forEach(row => row.forEach(cell => {\n        if (cell && typeof cell === 'object') { replacePlainField(cell, 'text'); if (!('text' in cell)) replaceHtmlField(cell, 'html') }\n      }))\n    })\n    if (count) { markDirty('replace'); render() }\n    closeModal(); showBanner(count ? `${count} ocorrência(s) substituída(s).` : 'Nenhuma ocorrência encontrada.')\n  }\n  openModal('Localizar e substituir', form)\n}\n'''
+          p.write_text(text[:a] + new + text[b:], encoding='utf-8')
+
+          replace('mdtxtrt/static/release.js',
+          '''    span.oninput = () => {\n      if (typeof node.items[index] !== 'object') node.items[index] = {html: span.innerHTML}\n      else node.items[index].html = span.innerHTML\n      markDirty('edit')\n    }\n''',
+          '''    span.oninput = () => {\n      if (typeof node.items[index] !== 'object') node.items[index] = {html: span.innerHTML}\n      else node.items[index].html = span.innerHTML\n      markDirty('edit')\n    }\n    span.onfocus = () => selectBlock(block)\n    span.addEventListener('keyup', rememberSelection)\n    span.addEventListener('mouseup', rememberSelection)\n''')
+
+          replace('mdtxtrt/static/release.js',
+          '''  summary.oninput = () => { node.summary_html = summary.innerHTML; markDirty('edit') }\n''',
+          '''  summary.oninput = () => { node.summary_html = summary.innerHTML; markDirty('edit') }\n  summary.onfocus = () => selectBlock(block)\n  summary.addEventListener('keyup', rememberSelection)\n  summary.addEventListener('mouseup', rememberSelection)\n''')
+
+          p = Path('mdtxtrt/domain/document.py')
+          text = p.read_text(encoding='utf-8')
+          text = text.replace('cell.get("text") if isinstance(cell, dict) else cell', '(cell.get("text") if cell.get("text") is not None else strip_tags(str(cell.get("html") or ""))) if isinstance(cell, dict) else cell')
+          p.write_text(text, encoding='utf-8')
+
+          test = Path('tests/test_final_v6.py')
+          test.write_text('''import unittest\nfrom pathlib import Path\n\nROOT = Path(__file__).resolve().parents[1]\n\nclass FinalV6Tests(unittest.TestCase):\n    def test_bot_download_is_bounded(self):\n        source = (ROOT / "mdtxtrt/telegram/bot.py").read_text(encoding="utf-8")\n        self.assertIn("document.file_size", source)\n        self.assertIn("class LimitedBuffer(io.BytesIO)", source)\n        self.assertIn("self.settings.max_upload_bytes", source)\n\n    def test_selection_is_restored_for_link_and_clear(self):\n        source = (ROOT / "mdtxtrt/static/release.js").read_text(encoding="utf-8")\n        self.assertIn("function restoreSavedSelection(editableNode)", source)\n        self.assertGreaterEqual(source.count("restoreSavedSelection(editableNode)"), 3)\n\n    def test_find_replace_walks_text_nodes(self):\n        source = (ROOT / "mdtxtrt/static/release.js").read_text(encoding="utf-8")\n        self.assertIn("NodeFilter.SHOW_TEXT", source)\n        self.assertIn("replaceVisibleText", source)\n        self.assertNotIn("node[key] = node[key].split(find).join(replacement)", source)\n\n    def test_structured_editors_capture_selection(self):\n        source = (ROOT / "mdtxtrt/static/release.js").read_text(encoding="utf-8")\n        self.assertIn("summary.addEventListener('mouseup', rememberSelection)", source)\n        self.assertIn("span.addEventListener('mouseup', rememberSelection)", source)\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
+      - name: Install runtime and audit tools
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install ruff
+      - name: Compile every Python source
+        run: python -m compileall -q .
+      - name: Run complete unit suite
+        run: python -m unittest discover -s tests -v
+      - name: Validate frontend syntax
+        run: node --check mdtxtrt/static/release.js
+      - name: Static Python audit
+        run: ruff check mdtxtrt tests app.py --select E9,F63,F7,F82
+      - name: Validate repository whitespace
+        run: git diff --check
+      - name: Verify imports
+        run: |
+          python - <<'PY'
+          import pkgutil, importlib, mdtxtrt
+          failures=[]
+          for module in pkgutil.walk_packages(mdtxtrt.__path__, mdtxtrt.__name__ + '.'):
+              try: importlib.import_module(module.name)
+              except Exception as exc: failures.append((module.name, repr(exc)))
+          if failures: raise SystemExit(failures)
+          print('all mdtxtrt modules import successfully')
+          PY
+      - name: Commit verified corrections
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mdtxtrt/telegram/bot.py mdtxtrt/static/release.js mdtxtrt/domain/document.py tests/test_final_v6.py
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix: correct verified final product defects"
+          git push origin HEAD:release/mdtxtrt-final-v6
