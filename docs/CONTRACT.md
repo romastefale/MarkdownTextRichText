@@ -1,6 +1,6 @@
 # MDTXTRT — contrato v1
 
-Estado: contrato registrado; implementação e validação pendentes.
+Estado: implementação e validação interna concluídas; ativação real do bot e QA móvel dependem das credenciais externas registradas na entrega.
 
 ## Resultado esperado
 
