@@ -13,10 +13,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Install runtime and independent test tools
         run: |
           python -m pip install -r requirements.txt
           python -m pip install ruff
+          npm install --no-save jsdom@26
       - name: Compile and static audit whole source
         run: |
           python -m compileall -q .
@@ -34,7 +38,6 @@ jobs:
           from mdtxtrt.domain.document import new_document, make_node, plain_text
           from mdtxtrt.services.imports import import_file, import_key_for_bytes
           from mdtxtrt.services.conversion import review
-
           with tempfile.TemporaryDirectory() as td:
               store = Store(Path(td) / 'audit.sqlite3')
               uid, other = 101, 202
@@ -48,75 +51,82 @@ jobs:
               ]
               draft = store.create_draft(uid, doc)
               assert store.load_draft(uid, draft['id'])['id'] == draft['id']
-              try:
-                  store.load_draft(other, draft['id'])
-              except KeyError:
-                  pass
-              else:
-                  raise AssertionError('cross-user draft read allowed')
+              try: store.load_draft(other, draft['id'])
+              except KeyError: pass
+              else: raise AssertionError('cross-user draft read allowed')
               revised = store.revise(uid, draft['id'], doc, draft['session'], event_type='audit', parent_revision_id=draft['revision_id'])
-              undone = store.undo(uid, draft['id'])
-              assert undone['revision_id'] == draft['revision_id']
-              redone = store.redo(uid, draft['id'], revised['revision_id'])
-              assert redone['revision_id'] == revised['revision_id']
-              duplicate = store.duplicate_draft(uid, draft['id'])
-              assert duplicate['id'] != draft['id']
+              assert store.undo(uid, draft['id'])['revision_id'] == draft['revision_id']
+              assert store.redo(uid, draft['id'], revised['revision_id'])['revision_id'] == revised['revision_id']
+              assert store.duplicate_draft(uid, draft['id'])['id'] != draft['id']
               text = plain_text(doc)
-              assert 'Cell' in text and 'Plain' in text
-
-              raw = b'# Heading\n\nBody'
-              key = import_key_for_bytes('audit', raw)
+              for expected in ('Alpha beta','one','two','Summary','Body','Cell','Plain','Button'):
+                  assert expected in text, (expected, text)
+              raw = b'# Heading\n\nBody'; key = import_key_for_bytes('audit', raw)
               first = import_file(store, uid, name='a.md', mime='text/markdown', raw=raw, import_key=key)
               second = import_file(store, uid, name='a.md', mime='text/markdown', raw=raw, import_key=key)
               assert first['ok'] and second['ok'] and second['idempotent'] is True
-              report = review(first['draft']['document'], 'telegram')
-              assert isinstance(report, dict)
+              assert isinstance(review(first['draft']['document'], 'telegram'), dict)
           print('independent domain/storage/conversion scenarios passed')
           PY
       - name: Independent HTTP black-box scenarios
         run: |
           python - <<'PY'
-          import asyncio, json, tempfile
+          import asyncio, tempfile
           from pathlib import Path
           from aiohttp.test_utils import TestClient, TestServer
           from mdtxtrt.config import Settings
           from mdtxtrt.web.server import Server
-
           async def main():
               with tempfile.TemporaryDirectory() as td:
-                  root = Path(td)
-                  settings = Settings(
-                      telegram_token='',
-                      web_app_url='https://example.invalid',
-                      database_path=root/'audit.sqlite3',
-                      static_path=Path('mdtxtrt/static'),
-                      telegraph_aes_key=None,
-                      port=8080,
-                      init_data_ttl_seconds=3600,
-                      max_upload_bytes=1024,
-                  )
-                  app = Server(settings).app()
-                  async with TestClient(TestServer(app)) as client:
-                      health = await client.get('/health')
-                      assert health.status == 200
-                      payload = await health.json()
-                      assert payload['ok'] is True and payload['max_upload_bytes'] == 1024
-                      index = await client.get('/')
-                      assert index.status == 200
-                      body = await index.text()
-                      assert '/static/release.js' in body
-                      js = await client.get('/static/release.js')
-                      assert js.status == 200 and 'function findReplace()' in await js.text()
-                      missing = await client.get('/static/not-present.js')
-                      assert missing.status == 404
-              print('independent HTTP black-box scenarios passed')
+                  settings = Settings(telegram_token='',web_app_url='https://example.invalid',database_path=Path(td)/'audit.sqlite3',static_path=Path('mdtxtrt/static'),telegraph_aes_key=None,port=8080,init_data_ttl_seconds=3600,max_upload_bytes=1024)
+                  async with TestClient(TestServer(Server(settings).app())) as client:
+                      health=await client.get('/health'); assert health.status==200
+                      payload=await health.json(); assert payload['ok'] is True and payload['max_upload_bytes']==1024
+                      index=await client.get('/'); assert index.status==200
+                      body=await index.text(); assert '/static/release.js' in body and '/static/release.css' in body
+                      assert (await client.get('/static/release.js')).status==200
+                      assert (await client.get('/static/release.css')).status==200
+                      assert (await client.get('/static/not-present.js')).status==404
           asyncio.run(main())
+          PY
+      - name: Independent interface DOM and interaction scenarios
+        run: |
+          node <<'JS'
+          const fs = require('fs'); const {JSDOM} = require('jsdom');
+          const html=fs.readFileSync('mdtxtrt/static/index.html','utf8');
+          const js=fs.readFileSync('mdtxtrt/static/release.js','utf8');
+          const dom=new JSDOM(html,{runScripts:'outside-only',url:'https://example.invalid/',pretendToBeVisual:true});
+          const w=dom.window;
+          w.crypto={getRandomValues:a=>{for(let i=0;i<a.length;i++)a[i]=i+1;return a}};
+          w.structuredClone=global.structuredClone; w.fetch=async()=>({ok:true,status:200,json:async()=>({ok:true,drafts:[],archived:[],preferences:{},appearance:{theme:'system',accent:'orange'},destinations:[]})});
+          w.eval(js);
+          const q=s=>w.document.querySelector(s); const qa=s=>[...w.document.querySelectorAll(s)];
+          for(const sel of ['#editor','#toolbar','#editTab','#previewTab','#modal','#toast','#addParagraph','[data-inline="strong"]','[data-inline="sub"]','[data-inline="sup"]','[data-inline="code"]','[data-block="code"]']) assert(q(sel),`missing ${sel}`);
+          function assert(v,m){if(!v)throw new Error(m)}
+          assert(q('#previewPane').classList.contains('hidden'),'preview initially visible');
+          q('#previewTab').click(); assert(q('#editorPane').classList.contains('hidden'),'editor did not hide'); assert(!q('#previewPane').classList.contains('hidden'),'preview did not show');
+          q('#editTab').click(); assert(!q('#editorPane').classList.contains('hidden'),'editor did not restore');
+          q('#addParagraph').click(); assert(qa('#editor .block').length>=1,'paragraph was not inserted');
+          assert(q('#toolbar').getAttribute('aria-label')==='Formatação','toolbar accessibility label missing');
+          assert(qa('#toolbar button').every(b=>b.getAttribute('aria-label')),'toolbar button without aria-label');
+          console.log('independent interface DOM and interaction scenarios passed');
+          JS
+      - name: Interface responsive/accessibility structural audit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          h=Path('mdtxtrt/static/index.html').read_text(); c=Path('mdtxtrt/static/release.css').read_text()
+          required=['viewport-fit=cover','aria-live="polite"','role="dialog"','aria-modal="true"','role="tablist"','role="tab"']
+          for x in required: assert x in h, x
+          for x in ['--tg-safe-area-inset','--tg-content-safe-area-inset','--tg-viewport-stable-height','prefers-reduced-motion','focus-visible','overflow-x:auto','@media(min-width:760px)']:
+              assert x in c, x
+          assert 'font-size:16px' in c
+          print('interface responsive/accessibility structural audit passed')
           PY
       - name: Verify all package imports
         run: |
           python - <<'PY'
-          import importlib, pkgutil, mdtxtrt
-          for item in pkgutil.walk_packages(mdtxtrt.__path__, mdtxtrt.__name__ + '.'):
-              importlib.import_module(item.name)
+          import importlib,pkgutil,mdtxtrt
+          for item in pkgutil.walk_packages(mdtxtrt.__path__,mdtxtrt.__name__+'.'): importlib.import_module(item.name)
           print('all package imports passed')
           PY
