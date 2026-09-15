@@ -45,7 +45,10 @@ A issue #4 preserva o histórico dessas correções.
 ## Pendências externas
 
 - o serviço oficial não possui `TOKEN`; por isso o bot permanece desativado;
-- `KEY` não está configurada; por isso tokens Telegraph não podem ser persistidos com AES-256-GCM;
+- `KEY` foi configurada sem disparar deploy;
+- nenhum volume persistente está conectado a `/data`; a persistência do SQLite ainda não está garantida;
+- o serviço oficial continua usando `feat/mdtxtrt-official-release`, não o head atual;
+- a tentativa de corrigir volume e branch foi bloqueada pelo limite de uso do agente Railway;
 - E2E Telegram e QA móvel real somente podem ser marcados após essas configurações e uma sessão real.
 
 ## Regra de status
