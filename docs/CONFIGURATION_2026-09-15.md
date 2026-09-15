@@ -7,4 +7,4 @@ Esta versão substitui os nomes longos das duas credenciais externas:
 
 O usuário não fornece token do Telegraph. O aplicativo cria uma conta Telegraph por usuário e protege o token retornado usando `KEY` com AES-256-GCM.
 
-As versões anteriores e sua cronologia permanecem preservadas. Nenhum merge foi realizado.
+As versões anteriores e sua cronologia permanecem preservadas. O PR #8 foi mesclado posteriormente pela conta do repositório; o evento e seu efeito estão registrados em `docs/CONTINUITY.md`. O PR corretivo #10 permanece sem merge automático.
