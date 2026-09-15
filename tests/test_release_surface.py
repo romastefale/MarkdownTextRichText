@@ -21,7 +21,9 @@ class FinalReleaseSurfaceTests(unittest.TestCase):
         js = (ROOT / 'mdtxtrt/static/release.js').read_text(encoding='utf-8')
         for inline in ('strong', 'em', 'u', 'sub', 'sup', 'code'):
             self.assertIn(f'data-inline="{inline}"', html)
-        self.assertIn("createBlock('code')", js)
+        self.assertIn('data-block="code"', html)
+        self.assertIn("else if (type === 'code')", js)
+        self.assertIn("if (button.dataset.block) return createBlock(button.dataset.block)", js)
         self.assertIn("for (let level = 0; level <= 6; level++)", js)
         self.assertIn("Excluir este trecho?", js)
         self.assertIn("toastUndo('Elemento excluído.'", js)
