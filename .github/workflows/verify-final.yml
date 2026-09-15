@@ -2,9 +2,9 @@ name: Verify final product
 
 on:
   push:
-    branches: [release/mdtxtrt-final-v5]
+    branches: [release/mdtxtrt-final-v9]
   pull_request:
-    branches: [release/mdtxtrt-final-v4]
+    branches: [release/mdtxtrt-final-v8]
   workflow_dispatch:
 
 permissions:

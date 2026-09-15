@@ -2,7 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from mdtxtrt.domain.document import make_node, new_document, plain_text
+from mdtxtrt.conversion.telegram_html import to_html
+from mdtxtrt.domain.document import make_node, new_document, normalize_document, plain_text
 from mdtxtrt.services.imports import import_file, import_key_for_bytes
 from mdtxtrt.storage.sqlite import Store
 
@@ -60,6 +61,21 @@ class IndependentBehaviorTests(unittest.TestCase):
         for visible in ("Alpha", "one", "two", "Summary", "Body", "Cell", "Plain", "Button"):
             with self.subTest(visible=visible):
                 self.assertIn(visible, text)
+
+    def test_rich_table_cells_are_sanitized_and_preserved_in_projection(self):
+        doc = new_document()
+        doc["nodes"] = [make_node(
+            "table",
+            rows=[[{"html": '<b>Rich</b><script>alert(1)</script><a href="javascript:bad">link</a>'}]],
+        )]
+        normalized = normalize_document(doc)
+        cell = normalized["nodes"][0]["rows"][0][0]["html"]
+        self.assertIn("<b>Rich</b>", cell)
+        self.assertNotIn("script", cell.lower())
+        self.assertNotIn("javascript:", cell.lower())
+        projected = to_html(normalized)
+        self.assertIn("<td><b>Rich</b>", projected)
+        self.assertIn("link", projected)
 
 
 if __name__ == "__main__":
