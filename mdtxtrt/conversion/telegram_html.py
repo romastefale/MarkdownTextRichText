@@ -78,7 +78,8 @@ def node_to_html(node: dict) -> str:
                     "align": value.get("align"),
                     "valign": value.get("valign"),
                 })
-                cells.append(f"<{tag}{cell_attrs}>{_text(value.get('text') or '')}</{tag}>")
+                body = value.get("html") if value.get("html") is not None else _text(value.get("text") or "")
+                cells.append(f"<{tag}{cell_attrs}>{body}</{tag}>")
             rows.append("<tr>" + "".join(cells) + "</tr>")
         return f"<table{attrs}>" + (f"<caption>{_text(caption)}</caption>" if caption else "") + "".join(rows) + "</table>"
     if typ == "map":
