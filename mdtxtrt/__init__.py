@@ -1,0 +1,3 @@
+from mdtxtrt.final_verification import apply_projection_corrections
+
+apply_projection_corrections()

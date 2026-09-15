@@ -2,9 +2,9 @@ name: Verify final product
 
 on:
   push:
-    branches: [release/mdtxtrt-final-v9]
+    branches: [release/mdtxtrt-final-v10]
   pull_request:
-    branches: [release/mdtxtrt-final-v8]
+    branches: [release/mdtxtrt-final-v9]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +27,8 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -v
       - name: Validate JavaScript syntax
-        run: node --check mdtxtrt/static/release.js
+        run: |
+          node --check mdtxtrt/static/release.js
+          node --check mdtxtrt/static/final-v10.js
       - name: Validate repository whitespace
         run: git diff --check HEAD^
