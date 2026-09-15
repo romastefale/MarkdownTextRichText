@@ -101,7 +101,7 @@ def plain_text(document: dict) -> str:
             out.append(str(node.get("name") or node.get("caption") or node.get("kind") or "Mídia"))
         elif typ == "table":
             for row in node.get("rows") or []:
-                out.append(" ".join(str(cell.get("text") if isinstance(cell, dict) else cell) for cell in row))
+                out.append(" ".join(str((cell.get("text") if cell.get("text") is not None else re.sub(r"<[^>]+>", "", str(cell.get("html") or ""))) if isinstance(cell, dict) else cell) for cell in row))
         elif typ == "raw_markdown":
             out.append(str(node.get("raw") or ""))
     return "\n".join(part for part in out if part)
