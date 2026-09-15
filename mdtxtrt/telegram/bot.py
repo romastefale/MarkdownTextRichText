@@ -148,12 +148,22 @@ class TelegramRuntime:
     async def _read_document(self, message: Message) -> tuple[bytes, str, str, str]:
         if self.bot is None or message.document is None:
             raise ValueError("Arquivo ausente.")
-        buffer = io.BytesIO()
-        await self.bot.download(message.document, destination=buffer, timeout=60)
+        document = message.document
+        limit = int(self.settings.max_upload_bytes)
+        if document.file_size is not None and int(document.file_size) > limit:
+            raise ValueError(f"Arquivo excede o limite de {limit} bytes.")
+
+        class LimitedBuffer(io.BytesIO):
+            def write(self, data):
+                if self.tell() + len(data) > limit:
+                    raise ValueError(f"Arquivo excede o limite de {limit} bytes.")
+                return super().write(data)
+
+        buffer = LimitedBuffer()
+        await self.bot.download(document, destination=buffer, timeout=60)
         raw = buffer.getvalue()
         if not raw:
             raise ValueError("Arquivo vazio.")
-        document = message.document
         return (
             raw,
             document.file_name or "import.txt",

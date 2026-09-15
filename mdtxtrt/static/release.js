@@ -358,6 +358,9 @@ function renderDetails(block, node) {
   summary.contentEditable = 'true'
   summary.innerHTML = node.summary_html || 'Detalhes'
   summary.oninput = () => { node.summary_html = summary.innerHTML; markDirty('edit') }
+  summary.onfocus = () => selectBlock(block)
+  summary.addEventListener('keyup', rememberSelection)
+  summary.addEventListener('mouseup', rememberSelection)
   details.appendChild(summary)
   const bodyNode = {html: node.html || ''}
   const body = editable(bodyNode, 'Conteúdo…')
@@ -386,6 +389,9 @@ function renderList(block, node) {
       else node.items[index].html = span.innerHTML
       markDirty('edit')
     }
+    span.onfocus = () => selectBlock(block)
+    span.addEventListener('keyup', rememberSelection)
+    span.addEventListener('mouseup', rememberSelection)
     li.appendChild(span)
     list.appendChild(li)
   })
@@ -571,12 +577,23 @@ toolbar.addEventListener('click', event => {
   if (button.dataset.action === 'link') return createLink()
 })
 
+function restoreSavedSelection(editableNode) {
+  editableNode.focus()
+  if (!savedTextRange || !editableNode.contains(savedTextRange.commonAncestorContainer)) return false
+  const selection = window.getSelection()
+  selection.removeAllRanges()
+  selection.addRange(savedTextRange)
+  return true
+}
+
 function createLink() {
   const block = selectedBlock(); const editableNode = block && block.querySelector('[contenteditable=true]')
   if (!editableNode) return
+  rememberSelection()
   const url = prompt('URL')
   if (!url) return
-  editableNode.focus(); document.execCommand('createLink', false, url)
+  restoreSavedSelection(editableNode)
+  document.execCommand('createLink', false, url)
   editableNode.dispatchEvent(new InputEvent('input', {bubbles: true}))
 }
 
@@ -615,8 +632,15 @@ document.getElementById('moreButton').onclick = showMoreMenu
 function clearFormatting() {
   const block = selectedBlock(); const editableNode = block && block.querySelector('[contenteditable=true]')
   if (!editableNode) return
-  editableNode.focus(); document.execCommand('removeFormat', false)
-  editableNode.querySelectorAll('a').forEach(a => a.replaceWith(document.createTextNode(a.textContent || '')))
+  restoreSavedSelection(editableNode)
+  document.execCommand('removeFormat', false)
+  const selection = window.getSelection()
+  if (selection && selection.rangeCount) {
+    const range = selection.getRangeAt(0)
+    editableNode.querySelectorAll('a').forEach(a => {
+      if (range.intersectsNode(a)) a.replaceWith(document.createTextNode(a.textContent || ''))
+    })
+  }
   editableNode.dispatchEvent(new InputEvent('input', {bubbles: true}))
 }
 
@@ -646,6 +670,21 @@ function editRichButton(node, index) {
   openModal(index < 0 ? 'Novo botão Rich' : 'Editar botão Rich', form)
 }
 
+function replaceVisibleText(html, find, replacement) {
+  const root = document.createElement('div')
+  root.innerHTML = html || ''
+  let count = 0
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const textNodes = []
+  while (walker.nextNode()) textNodes.push(walker.currentNode)
+  textNodes.forEach(node => {
+    if (!node.nodeValue.includes(find)) return
+    count += node.nodeValue.split(find).length - 1
+    node.nodeValue = node.nodeValue.split(find).join(replacement)
+  })
+  return {html: root.innerHTML, count}
+}
+
 function findReplace() {
   const form = document.createElement('form'); form.className = 'form'
   form.innerHTML = '<label>Localizar<input name="find"></label><label>Substituir por<input name="replace"></label><div class="row"><button type="button" data-cancel>Cancelar</button><button class="primary" type="submit">Substituir</button></div>'
@@ -654,11 +693,25 @@ function findReplace() {
     event.preventDefault(); const data = new FormData(form); const find = String(data.get('find') || ''); const replacement = String(data.get('replace') || '')
     if (!find) return
     let count = 0
+    const replaceHtmlField = (object, key) => {
+      if (!object || typeof object[key] !== 'string') return
+      const result = replaceVisibleText(object[key], find, replacement)
+      object[key] = result.html; count += result.count
+    }
+    const replacePlainField = (object, key) => {
+      if (!object || typeof object[key] !== 'string' || !object[key].includes(find)) return
+      count += object[key].split(find).length - 1
+      object[key] = object[key].split(find).join(replacement)
+    }
     nodes().forEach(node => {
-      for (const key of ['html', 'summary_html', 'text', 'expression', 'raw']) {
-        if (typeof node[key] === 'string' && node[key].includes(find)) { count += node[key].split(find).length - 1; node[key] = node[key].split(find).join(replacement) }
-      }
-      if (node.type === 'list') (node.items || []).forEach(item => { if (item && typeof item.html === 'string' && item.html.includes(find)) { count += item.html.split(find).length - 1; item.html = item.html.split(find).join(replacement) } })
+      replaceHtmlField(node, 'html')
+      replaceHtmlField(node, 'summary_html')
+      for (const key of ['text', 'expression', 'raw']) replacePlainField(node, key)
+      if (node.type === 'list') (node.items || []).forEach(item => replaceHtmlField(item, 'html'))
+      if (node.type === 'buttons') (node.items || []).forEach(item => replaceHtmlField(item, 'html'))
+      if (node.type === 'table') (node.rows || []).forEach(row => row.forEach(cell => {
+        if (cell && typeof cell === 'object') { replacePlainField(cell, 'text'); if (!('text' in cell)) replaceHtmlField(cell, 'html') }
+      }))
     })
     if (count) { markDirty('replace'); render() }
     closeModal(); showBanner(count ? `${count} ocorrência(s) substituída(s).` : 'Nenhuma ocorrência encontrada.')
