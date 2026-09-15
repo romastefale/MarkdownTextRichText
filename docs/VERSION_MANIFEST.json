@@ -1,0 +1,175 @@
+{
+  "version": "2026-09-13-v2",
+  "files": [
+    {
+      "path": "Procfile",
+      "size": 19,
+      "sha256": "7153a696348182d56054897f6d24d2f7fb9cccbd1ebe15e5d43a33733a8cdad7"
+    },
+    {
+      "path": "app.py",
+      "size": 73,
+      "sha256": "6cd733dce0bc22bdbf7e70b41436373778c329eadd95b2fbd4819f6427dc30c6"
+    },
+    {
+      "path": "docs/CONTINUITY.md",
+      "size": 2255,
+      "sha256": "dc9c1babc24e07b756d122b3011398023f35c6f30471b93726862ee361911b4b"
+    },
+    {
+      "path": "docs/RECOVERY_PROVENANCE.md",
+      "size": 1106,
+      "sha256": "59298aa77be0acf20513c29581b0711ba752003577fa04ace1492039a70fa1ac"
+    },
+    {
+      "path": "mdtxtrt/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "mdtxtrt/__main__.py",
+      "size": 273,
+      "sha256": "4ca633c4df4684a9dcc5698e8192c0db186a68c814249765769cd8e04f4a967c"
+    },
+    {
+      "path": "mdtxtrt/config.py",
+      "size": 1507,
+      "sha256": "a7cb2631b24563567b2f5ca5eea427b69997d074d44c684aabe702fecc08cba8"
+    },
+    {
+      "path": "mdtxtrt/conversion/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "mdtxtrt/conversion/legacy_projection.py",
+      "size": 41680,
+      "sha256": "d59c52f5ad80b04065289af4675e06d1ffa329100c75d9e6fa058cb844735bdb"
+    },
+    {
+      "path": "mdtxtrt/conversion/markdown.py",
+      "size": 17672,
+      "sha256": "7e3b12fc8448ac76270aefb004dd78feed3932472743a2ef476a9863b748ee5c"
+    },
+    {
+      "path": "mdtxtrt/conversion/telegram_html.py",
+      "size": 6835,
+      "sha256": "d1feef63b7a9af123e8e7d56d140b38496d3e83505291383d87df2543ccc99a2"
+    },
+    {
+      "path": "mdtxtrt/conversion/txt.py",
+      "size": 5095,
+      "sha256": "f7584f25fbffd4fe111cc75a4f55f867b0fe84bb52046b0615bd9f5795861733"
+    },
+    {
+      "path": "mdtxtrt/domain/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "mdtxtrt/domain/document.py",
+      "size": 4778,
+      "sha256": "752b6d461bbd3c191372627769d3c97182a28efd2e885fb52a6a5288ea57d0ad"
+    },
+    {
+      "path": "mdtxtrt/domain/sanitize.py",
+      "size": 3336,
+      "sha256": "0a150e0ac3e0bde3354e9aeab96d4da3b27bbaaef9fa0ae38c6950cb1af2a215"
+    },
+    {
+      "path": "mdtxtrt/domain/session.py",
+      "size": 595,
+      "sha256": "8ae71bde22f2b2c7e746f249a8fe9c44f6407ac4d0058f64b041c6790a76ef11"
+    },
+    {
+      "path": "mdtxtrt/services/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "mdtxtrt/services/conversion.py",
+      "size": 4896,
+      "sha256": "a1e04776ccfc88f167db60bf3b86be308b0dd8589d576a61d328d7f481925365"
+    },
+    {
+      "path": "mdtxtrt/services/imports.py",
+      "size": 5370,
+      "sha256": "08c3ba09d5d7836b5346cb86285988715235fc1ed7f3437ae1f3b4ad1e397d12"
+    },
+    {
+      "path": "mdtxtrt/static/app.js",
+      "size": 37510,
+      "sha256": "eb653a357663444af7151c626c7fe3927c049d609206254384ca30a9b2dd898a"
+    },
+    {
+      "path": "mdtxtrt/static/index.html",
+      "size": 3405,
+      "sha256": "ad88cc0245e410464433878e090347f66a62f6429e522f2ce7233bd72942406e"
+    },
+    {
+      "path": "mdtxtrt/static/style.css",
+      "size": 5922,
+      "sha256": "9995c086996b93eafdc2d7d14c9e60bbe3beb0e4333aee5c36181999577f3078"
+    },
+    {
+      "path": "mdtxtrt/storage/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "mdtxtrt/storage/sqlite.py",
+      "size": 30319,
+      "sha256": "cbdcc56372fdef6934ccd2bceb5caf66ba8103c737bc4fe0e58674373cf30b73"
+    },
+    {
+      "path": "mdtxtrt/telegram/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "mdtxtrt/telegram/bot.py",
+      "size": 16525,
+      "sha256": "65fc85e990bc9497d5fc94960cc94e462337693535caec075f7dca8d31daf9fc"
+    },
+    {
+      "path": "mdtxtrt/telegram/message.py",
+      "size": 4294,
+      "sha256": "0bccacc53c5b580626e42e7e4d56c6f23dba551b720b52bd6556320815473952"
+    },
+    {
+      "path": "mdtxtrt/telegram_formats.py",
+      "size": 16482,
+      "sha256": "82ebc6b7caa2606abfa4a20f7ae84f3ac24b92c24d0f53af5a1679f9e7ec9650"
+    },
+    {
+      "path": "mdtxtrt/telegraph.py",
+      "size": 3945,
+      "sha256": "e382344b548a0f646288710fb7c786d0c724555baae3b6ac6f76f489a739b966"
+    },
+    {
+      "path": "mdtxtrt/web/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "mdtxtrt/web/auth.py",
+      "size": 1688,
+      "sha256": "069dd26ae32f541b863a89557134f855b78dcc2fbf430094788fdbb59c3e3bd3"
+    },
+    {
+      "path": "mdtxtrt/web/server.py",
+      "size": 32169,
+      "sha256": "413af226ee1002531e6dd43658d741c9c6e8624b06da68482be2df15ea136550"
+    },
+    {
+      "path": "railway.json",
+      "size": 288,
+      "sha256": "09329141673d5f0f8bf8f67fa3bc4edab5cd00ccbf8465511f8855a4ebfc043b"
+    },
+    {
+      "path": "requirements.txt",
+      "size": 62,
+      "sha256": "3ecbf33e73f4ab25759b4abca86b56697418fd5beb522e982ac69befe7efa62f"
+    }
+  ]
+}
