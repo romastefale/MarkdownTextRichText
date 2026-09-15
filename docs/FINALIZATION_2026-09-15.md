@@ -20,10 +20,11 @@ Não foi escolhida uma versão antiga do aiogram porque 3.31.0 é a versão est�
 - compilação dos módulos Python: aprovada.
 - `node --check mdtxtrt/static/release.js`: aprovado.
 - startup local e `/health`: aprovados.
-- deploy oficial Railway `22c99d7e-84b6-4124-9950-3440ae221b01`: `SUCCESS`, com healthcheck aprovado.
+- o deploy Railway histórico `22c99d7e-84b6-4124-9950-3440ae221b01` foi aprovado antes da remoção do serviço correspondente;
+- o serviço atual `mdtxtrt-implementation` possui deploy `SUCCESS` e domínio público.
 
 ## Limite externo
 
-O código do produto está concluído no escopo contratado. A operação real do bot não pode ser validada enquanto `TOKEN` não existir no serviço Railway. A persistência segura de tokens Telegraph também exige `KEY`. E2E Telegram e QA móvel permanecem não comprovados até a configuração dessas credenciais e o teste em cliente real.
+O código do produto está concluído no escopo contratado. O serviço `mdtxtrt-official-release` foi removido do Railway. O serviço atual é `mdtxtrt-implementation`, com domínio `https://mdtxtrt-implementation-production.up.railway.app`. Nele, `KEY`, `MDTXTRT_DB=/data/mdtxtrt.sqlite3` e `WEB_APP_URL` foram preparados sem disparar deploy. A operação real do bot não pode ser validada enquanto `TOKEN` não existir. O volume persistente em `/data` e a troca da branch foram bloqueados pelo limite de uso do agente Railway. E2E Telegram e QA móvel permanecem não comprovados.
 
-Nenhum merge foi realizado.
+O PR #8 foi posteriormente mesclado pela conta GitHub `romastefale` às 04:37 UTC, fora das ações executadas pelo assistente. O workflow histórico restaurado foi acionado por esse merge e materializou novamente o checkpoint na branch de implementação. Nenhuma reversão destrutiva foi executada.
