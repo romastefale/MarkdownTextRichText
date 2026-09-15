@@ -276,11 +276,21 @@ function duplicateNode(id) {
 function blockTools(node) {
   const tools = document.createElement('div')
   tools.className = 'block-tools'
-  const duplicate = document.createElement('button'); duplicate.type = 'button'; duplicate.textContent = '◧'; duplicate.title = 'Duplicar'
-  duplicate.onclick = event => { event.stopPropagation(); duplicateNode(node.id) }
-  const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '×'; remove.title = 'Excluir'
-  remove.onclick = event => { event.stopPropagation(); deleteNode(node.id) }
-  tools.append(duplicate, remove)
+  const menu = document.createElement('button'); menu.type = 'button'; menu.setAttribute('aria-label', 'Opções do trecho')
+  menu.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>'
+  menu.onclick = event => {
+    event.stopPropagation()
+    const wrap = document.createElement('div'); wrap.className = 'choice-list'
+    addChoice(wrap, 'Duplicar trecho', () => { closeModal(); duplicateNode(node.id) })
+    addChoice(wrap, 'Excluir trecho…', () => {
+      const confirm = document.createElement('div'); confirm.className = 'choice-list'
+      addChoice(confirm, 'Manter texto', closeModal)
+      addChoice(confirm, 'Excluir este trecho', () => { closeModal(); deleteNode(node.id) })
+      openModal('Excluir este trecho?', confirm)
+    })
+    openModal('Trecho', wrap)
+  }
+  tools.append(menu)
   return tools
 }
 
@@ -306,7 +316,7 @@ function renderNode(node) {
   const typ = node.type
   if (typ === 'paragraph') block.appendChild(editable(node))
   else if (typ === 'heading') {
-    const level = Math.max(1, Math.min(3, Number(node.level || 2)))
+    const level = Math.max(1, Math.min(6, Number(node.level || 2)))
     block.classList.add(`heading-${level}`)
     block.appendChild(editable(node, `Título H${level}…`))
   } else if (typ === 'blockquote' || typ === 'pullquote') {
@@ -486,12 +496,14 @@ function createBlock(type, extra = {}) {
 
 document.getElementById('addParagraph').onclick = () => createBlock('paragraph')
 
+let savedTextRange = null
 function rememberSelection() {
   const selection = window.getSelection()
   const block = selectedBlock()
   if (!selection || !block || !selection.rangeCount) return
   const editableNode = block.querySelector('[contenteditable=true]')
   if (!editableNode || !editableNode.contains(selection.anchorNode)) return
+  savedTextRange = selection.getRangeAt(0).cloneRange()
   state.session.selection = {node_id: block.dataset.id}
 }
 
@@ -502,6 +514,9 @@ function execInline(tag) {
   const editableNode = block.querySelector('[contenteditable=true]')
   if (!editableNode) return
   editableNode.focus()
+  if (savedTextRange && editableNode.contains(savedTextRange.commonAncestorContainer)) {
+    const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(savedTextRange)
+  }
   if (command) document.execCommand(command, false)
   else {
     const selection = window.getSelection()
@@ -533,10 +548,24 @@ function updateToolbarState() {
   }
 }
 
+function textStyleMenu() {
+  const block = selectedBlock(), node = nodes().find(item => item.id === block?.dataset.id)
+  const wrap = document.createElement('div'); wrap.className = 'choice-list'
+  for (let level = 0; level <= 6; level++) {
+    addChoice(wrap, level ? `Título ${level}` : 'Texto normal', () => {
+      if (!node || !['paragraph', 'heading'].includes(node.type)) { showBanner('Selecione um parágrafo ou título.'); return }
+      node.type = level ? 'heading' : 'paragraph'
+      if (level) node.level = level; else delete node.level
+      markDirty('text_style'); closeModal(); render(node.id)
+    })
+  }
+  openModal('Estilo de texto', wrap)
+}
+toolbar.addEventListener('pointerdown', event => { rememberSelection(); if (event.target.closest('button')) event.preventDefault() })
 toolbar.addEventListener('click', event => {
   const button = event.target.closest('button')
   if (!button) return
-  if (button.dataset.heading) return createBlock('heading', {level: Number(button.dataset.heading)})
+  if (button.dataset.action === 'text') return textStyleMenu()
   if (button.dataset.inline) return execInline(button.dataset.inline)
   if (button.dataset.block) return createBlock(button.dataset.block)
   if (button.dataset.action === 'link') return createLink()
@@ -726,7 +755,7 @@ function nodeText(node) {
 function previewNode(node) {
   const typ = node.type
   if (typ === 'paragraph') return `<p>${node.html || ''}</p>`
-  if (typ === 'heading') { const level = Math.max(1, Math.min(3, Number(node.level || 2))); return `<h${level}>${node.html || ''}</h${level}>` }
+  if (typ === 'heading') { const level = Math.max(1, Math.min(6, Number(node.level || 2))); return `<h${level}>${node.html || ''}</h${level}>` }
   if (typ === 'blockquote' || typ === 'pullquote') return `<blockquote>${node.html || ''}</blockquote>`
   if (typ === 'footer') return `<footer>${node.html || ''}</footer>`
   if (typ === 'details') return `<details${node.open !== false ? ' open' : ''}><summary>${node.summary_html || 'Detalhes'}</summary><p>${node.html || ''}</p></details>`
@@ -845,8 +874,44 @@ async function publishTelegraph() {
   } catch (error) { showBanner(error.message, 'error') }
 }
 
+let appearanceSettings = {accent: 'laranja', palette: {laranja: {label: 'Laranja', color: '#ff7a00', text: '#000000'}}}
+function applyAppearance(settings = appearanceSettings) {
+  appearanceSettings = settings
+  const selected = settings.palette[settings.accent] || settings.palette.laranja
+  document.documentElement.style.setProperty('--accent', selected.color)
+  document.documentElement.style.setProperty('--accent-text', selected.text)
+  const dark = tg?.colorScheme ? tg.colorScheme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  try {
+    mainButton?.setParams({color: selected.color, text_color: selected.text})
+    tg?.setHeaderColor?.(dark ? '#000000' : '#ffffff')
+    tg?.setBackgroundColor?.(dark ? '#000000' : '#ffffff')
+  } catch (_) {}
+}
+async function refreshAppearance() {
+  try { const data = await api('/api/bootstrap', {}); applyAppearance(data.appearance) } catch (_) {}
+}
+async function colorMenu() {
+  await refreshAppearance()
+  const wrap = document.createElement('div'); wrap.className = 'choice-list'
+  for (const [key, color] of Object.entries(appearanceSettings.palette)) {
+    const choice = document.createElement('button'); choice.className = 'choice'
+    choice.textContent = color.label + (key === appearanceSettings.accent ? ' · selecionada' : '')
+    choice.setAttribute('aria-pressed', String(key === appearanceSettings.accent))
+    choice.onclick = async () => {
+      choice.disabled = true
+      try {
+        await api('/api/preference', {key: 'accent', value: key})
+        applyAppearance({...appearanceSettings, accent: key}); closeModal()
+      } catch (error) { showBanner(error.message, 'error'); choice.disabled = false }
+    }
+    wrap.appendChild(choice)
+  }
+  openModal('Cor de destaque', wrap)
+}
 function settingsMenu() {
   const wrap = document.createElement('div'); wrap.className = 'choice-list'
+  addChoice(wrap, 'Cor de destaque', colorMenu)
   addChoice(wrap, 'Rascunhos', () => { closeModal(); showDrafts() })
   addChoice(wrap, 'Importar .md/.txt', () => { closeModal(); fileInput.click() })
   addChoice(wrap, 'Localizar e substituir', () => { closeModal(); findReplace() })
@@ -855,7 +920,7 @@ function settingsMenu() {
   addChoice(wrap, 'Publicar no Telegraph', () => { closeModal(); publishTelegraph() })
   addChoice(wrap, 'Desfazer', () => { closeModal(); doUndo() })
   addChoice(wrap, 'Refazer', () => { closeModal(); doRedo() })
-  openModal('Documento', wrap)
+  openModal('Configurações', wrap)
 }
 
 function updateNativeSend() {
@@ -898,6 +963,8 @@ async function bootstrapTelegram() {
     tg.onEvent?.('viewportChanged', event => updateViewport(true, event))
     tg.onEvent?.('safeAreaChanged', () => updateViewport(false))
     tg.onEvent?.('contentSafeAreaChanged', () => updateViewport(false))
+    tg.onEvent?.('activated', refreshAppearance)
+    tg.onEvent?.('themeChanged', () => applyAppearance())
     updateViewport(false); syncBackButton(); updateNativeSend()
   } catch (_) {}
 }
@@ -907,6 +974,7 @@ async function bootstrap() {
   const local = localMirror()
   try {
     const data = await api('/api/bootstrap', {})
+    applyAppearance(data.appearance)
     state.destinations = data.destinations || []
     const requested = data.requested_draft || new URLSearchParams(location.search).get('draft')
     if (requested) return loadDraft(requested)
@@ -941,5 +1009,20 @@ document.addEventListener('focusin', event => { if (event.target.matches?.('[con
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') { event.preventDefault(); findReplace() } })
 checkpointTimer = setInterval(() => checkpoint('checkpoint', true), CHECKPOINT_MS)
 
+const toolbarIcons = {
+  'strong': 'M7 4h6a4 4 0 0 1 0 8H7Zm0 8h7a4 4 0 0 1 0 8H7Z',
+  'em': 'M10 4h9M5 20h9M15 4 9 20',
+  'u': 'M6 4v8a6 6 0 0 0 12 0V4M5 21h14',
+  'list': 'M9 6h12M9 12h12M9 18h12M3 6h1M3 12h1M3 18h1',
+  'blockquote': 'M4 6h6v7H4Zm10 0h6v7h-6ZM10 13q0 5-5 5M20 13q0 5-5 5',
+  'link': 'm10 13 4-4M8 16l-1 1a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0M16 8l1-1a4 4 0 0 1 6 6l-5 5a4 4 0 0 1-6 0',
+  'code': 'm8 6-6 6 6 6M16 6l6 6-6 6M14 3l-4 18',
+  'more': 'M12 4v16M4 12h16'
+}
+for (const button of toolbar.querySelectorAll('button')) {
+  const key = button.dataset.inline || button.dataset.block || button.dataset.action || 'more'
+  if (toolbarIcons[key]) button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${toolbarIcons[key]}"/></svg>`
+}
+document.getElementById('modalClose').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>'
 bootstrap()
 })()

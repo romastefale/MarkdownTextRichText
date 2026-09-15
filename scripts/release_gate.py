@@ -132,7 +132,7 @@ def validate_static_contract():
     js = (root / "mdtxtrt/static/release.js").read_text(encoding="utf-8")
     css = (root / "mdtxtrt/static/release.css").read_text(encoding="utf-8")
 
-    for token in ('data-heading="1"', 'data-heading="2"', 'data-heading="3"', 'Prévia'):
+    for token in ('data-action="text"', 'Estilo de texto', 'Prévia'):
         assert token in html, f"interface sem requisito: {token}"
     for token in ("BackButton", "SettingsButton", "viewportStableHeight", "destination_id", "/api/conversion/review", "/api/telegram/send"):
         assert token in js, f"Mini App sem integração: {token}"

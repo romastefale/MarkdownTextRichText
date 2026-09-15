@@ -1,5 +1,11 @@
 # MDTXTRT — contrato v1
 
+## Evolução de interface — 2026-09-15
+
+Laranja padrão e sete cores pessoais nas configurações: vermelho, laranja, amarelo, verde, azul, anil e violeta. `/configuracoes` e `/cor` oferecem seleção por botões Rich, sem exigir digitação da cor. A preferência sincroniza com a Mini App; o botão de entrada continua verde. Fundo claro branco e escuro preto.
+
+Um botão de texto reúne parágrafo e títulos H1–H6. Formatar transforma o trecho selecionado sem inserir outro vazio. Ícones SVG consistentes. Exclusão de trecho somente no menu contextual, com confirmação e desfazer; nenhum X de exclusão sobre o texto. Esta seção evolui os controles anteriores sem reduzir as categorias funcionais abaixo.
+
 Estado: implementação e validação interna concluídas; ativação real do bot e QA móvel dependem das credenciais externas registradas na entrega.
 
 ## Resultado esperado
