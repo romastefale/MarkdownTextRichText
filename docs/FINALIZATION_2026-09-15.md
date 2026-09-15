@@ -26,4 +26,4 @@ Não foi escolhida uma versão antiga do aiogram porque 3.31.0 é a versão est�
 
 O código do produto está concluído no escopo contratado. A operação real do bot não pode ser validada enquanto `TOKEN` não existir no serviço Railway. `KEY` foi gerada e configurada no serviço oficial sem disparar deploy. O serviço ainda precisa de um volume persistente em `/data` e continua apontando para a branch anterior; a correção dessas duas configurações foi bloqueada pelo limite de uso do agente Railway. E2E Telegram e QA móvel permanecem não comprovados.
 
-Nenhum merge foi realizado.
+O PR #8 foi posteriormente mesclado pela conta GitHub `romastefale` às 04:37 UTC, fora das ações executadas pelo assistente. O workflow histórico restaurado foi acionado por esse merge e materializou novamente o checkpoint na branch de implementação. Nenhuma reversão destrutiva foi executada.
