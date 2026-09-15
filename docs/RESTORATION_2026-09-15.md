@@ -2,7 +2,7 @@
 
 ## Escopo
 
-Esta versão restaura 22 arquivos encontrados como excluídos no histórico da branch `feat/mdtxtrt-implementation`. O estado anterior permanece preservado no commit `15d6e2dafa63b90d677bc7290e0ecebd17b32e7f`; a restauração foi realizada na branch separada `restore/deleted-artifacts-v3`.
+Esta versão restaura 23 arquivos encontrados como excluídos no histórico da branch `feat/mdtxtrt-implementation`. O estado anterior permanece preservado no commit `15d6e2dafa63b90d677bc7290e0ecebd17b32e7f`; a restauração foi realizada na branch separada `restore/deleted-artifacts-v3`.
 
 ## Origens preservadas
 
