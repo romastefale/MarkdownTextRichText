@@ -1,0 +1,122 @@
+name: Independent final v7 verification
+on:
+  push:
+    branches: [release/mdtxtrt-final-v7]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install runtime and independent test tools
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install ruff
+      - name: Compile and static audit whole source
+        run: |
+          python -m compileall -q .
+          ruff check mdtxtrt tests app.py --select E9,F63,F7,F82
+          node --check mdtxtrt/static/release.js
+          git diff --check
+      - name: Run repository tests
+        run: python -m unittest discover -s tests -v
+      - name: Independent domain/storage/conversion scenarios
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          from mdtxtrt.storage.sqlite import Store
+          from mdtxtrt.domain.document import new_document, make_node, plain_text
+          from mdtxtrt.services.imports import import_file, import_key_for_bytes
+          from mdtxtrt.services.conversion import review
+
+          with tempfile.TemporaryDirectory() as td:
+              store = Store(Path(td) / 'audit.sqlite3')
+              uid, other = 101, 202
+              doc = new_document()
+              doc['nodes'] = [
+                  make_node('paragraph', html='<b>Alpha</b> beta'),
+                  make_node('list', ordered=False, items=[{'html':'one'}, {'html':'<i>two</i>'}]),
+                  make_node('details', summary_html='<b>Summary</b>', html='Body'),
+                  make_node('table', rows=[[{'html':'<b>Cell</b>'}, {'text':'Plain'}]]),
+                  make_node('buttons', items=[{'html':'Button','url':'https://example.com'}]),
+              ]
+              draft = store.create_draft(uid, doc)
+              assert store.load_draft(uid, draft['id'])['id'] == draft['id']
+              try:
+                  store.load_draft(other, draft['id'])
+              except KeyError:
+                  pass
+              else:
+                  raise AssertionError('cross-user draft read allowed')
+              revised = store.revise(uid, draft['id'], doc, draft['session'], event_type='audit', parent_revision_id=draft['revision_id'])
+              undone = store.undo(uid, draft['id'])
+              assert undone['revision_id'] == draft['revision_id']
+              redone = store.redo(uid, draft['id'], revised['revision_id'])
+              assert redone['revision_id'] == revised['revision_id']
+              duplicate = store.duplicate_draft(uid, draft['id'])
+              assert duplicate['id'] != draft['id']
+              text = plain_text(doc)
+              assert 'Cell' in text and 'Plain' in text
+
+              raw = b'# Heading\n\nBody'
+              key = import_key_for_bytes('audit', raw)
+              first = import_file(store, uid, name='a.md', mime='text/markdown', raw=raw, import_key=key)
+              second = import_file(store, uid, name='a.md', mime='text/markdown', raw=raw, import_key=key)
+              assert first['ok'] and second['ok'] and second['idempotent'] is True
+              report = review(first['draft']['document'], 'telegram')
+              assert isinstance(report, dict)
+          print('independent domain/storage/conversion scenarios passed')
+          PY
+      - name: Independent HTTP black-box scenarios
+        run: |
+          python - <<'PY'
+          import asyncio, json, tempfile
+          from pathlib import Path
+          from aiohttp.test_utils import TestClient, TestServer
+          from mdtxtrt.config import Settings
+          from mdtxtrt.web.server import Server
+
+          async def main():
+              with tempfile.TemporaryDirectory() as td:
+                  root = Path(td)
+                  settings = Settings(
+                      telegram_token='',
+                      web_app_url='https://example.invalid',
+                      database_path=root/'audit.sqlite3',
+                      static_path=Path('mdtxtrt/static'),
+                      telegraph_aes_key=None,
+                      port=8080,
+                      init_data_ttl_seconds=3600,
+                      max_upload_bytes=1024,
+                  )
+                  app = Server(settings).app()
+                  async with TestClient(TestServer(app)) as client:
+                      health = await client.get('/health')
+                      assert health.status == 200
+                      payload = await health.json()
+                      assert payload['ok'] is True and payload['max_upload_bytes'] == 1024
+                      index = await client.get('/')
+                      assert index.status == 200
+                      body = await index.text()
+                      assert '/static/release.js' in body
+                      js = await client.get('/static/release.js')
+                      assert js.status == 200 and 'function findReplace()' in await js.text()
+                      missing = await client.get('/static/not-present.js')
+                      assert missing.status == 404
+              print('independent HTTP black-box scenarios passed')
+          asyncio.run(main())
+          PY
+      - name: Verify all package imports
+        run: |
+          python - <<'PY'
+          import importlib, pkgutil, mdtxtrt
+          for item in pkgutil.walk_packages(mdtxtrt.__path__, mdtxtrt.__name__ + '.'):
+              importlib.import_module(item.name)
+          print('all package imports passed')
+          PY
