@@ -36,6 +36,7 @@ from aiogram.types import (
 )
 
 from mdtxtrt.conversion.markdown import import_markdown
+from mdtxtrt.appearance import ACCENTS, appearance, normalize_accent
 from mdtxtrt.conversion.traditional import to_markdown_v2, to_traditional_html
 from mdtxtrt.services.imports import EncodingChoiceRequired, import_file, import_key_for_bytes
 from mdtxtrt.telegram.message import build_input_rich_message
@@ -51,6 +52,31 @@ class TelegramRuntime:
         self.dispatcher: Dispatcher | None = None
         self.polling_task: asyncio.Task | None = None
         self.username = ""
+
+    async def color_command(self, message: Message):
+        if message.from_user is None:
+            return
+        current = appearance(self.store.preferences(int(message.from_user.id)))["accent"]
+        buttons = [RichMessageButton(text=value['label'], callback_data=f"accent:{message.from_user.id}:{key}") for key, value in ACCENTS.items()]
+        await self._send_blocks(message, [
+            InputRichBlockSectionHeading(text="Sua aparência", size=2),
+            InputRichBlockParagraph(text=f"Destaque: {ACCENTS[current]['label']}."),
+            InputRichBlockParagraph(text="Toque na sua cor de destaque."),
+            *[InputRichBlockButtons(buttons=buttons[i:i+2], align="left") for i in range(0, len(buttons), 2)],
+        ])
+
+    async def color_callback(self, callback):
+        parts = (callback.data or '').split(':')
+        if len(parts) != 3 or parts[1] != str(callback.from_user.id):
+            await callback.answer("Abra suas configurações para escolher sua cor.", show_alert=True)
+            return
+        try:
+            key = normalize_accent(parts[2])
+        except ValueError:
+            await callback.answer("Cor inválida.", show_alert=True)
+            return
+        self.store.set_preference(int(callback.from_user.id), 'accent', key)
+        await callback.answer(f"Destaque: {ACCENTS[key]['label']}")
 
     def web_app_url(self, **params) -> str:
         base = self.settings.web_app_url
@@ -414,6 +440,8 @@ class TelegramRuntime:
     def build_dispatcher(self) -> Dispatcher:
         dispatcher = Dispatcher()
         dispatcher.message.register(self.start_command, Command("start"))
+        dispatcher.message.register(self.color_command, Command("cor", "configuracoes"))
+        dispatcher.callback_query.register(self.color_callback, F.data.startswith("accent:"))
         dispatcher.message.register(self.help_command, Command("help"))
         dispatcher.message.register(self.importar_command, Command("importar"))
         dispatcher.message.register(self.converter_command, Command("converter"))
@@ -434,6 +462,8 @@ class TelegramRuntime:
         self.username = me.username or ""
         await self.bot.set_my_commands([
             BotCommand(command="start", description="Conheça o MDTXTRT"),
+            BotCommand(command="cor", description="Escolha uma das sete cores de destaque"),
+            BotCommand(command="configuracoes", description="Personalize a aparência do editor"),
             BotCommand(command="help", description="Veja como usar o bot"),
             BotCommand(command="importar", description="Converta um arquivo .md ou .txt"),
             BotCommand(command="converter", description="Converta uma mensagem de texto"),

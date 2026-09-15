@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from mdtxtrt.appearance import appearance, normalize_accent
+
 import hashlib
 import json
 import secrets
@@ -84,6 +86,7 @@ class Server:
                 "drafts": self.store.list_drafts(user_id, "active") + self.store.list_drafts(user_id, "import_review"),
                 "archived": self.store.list_drafts(user_id, "archived"),
                 "preferences": self.store.preferences(user_id),
+                "appearance": appearance(self.store.preferences(user_id)),
                 "pending_import": self.store.pending_action(user_id, "import"),
                 "destinations": self.store.list_telegram_destinations(user_id),
                 "requested_draft": data.get("draft"),
@@ -532,7 +535,13 @@ class Server:
         key = str(data.get("key") or "").strip()
         if not key:
             return web.json_response({"ok": False, "error": "Preferência sem chave."}, status=400)
-        self.store.set_preference(int(user["id"]), key, data.get("value"))
+        value = data.get("value")
+        if key == "accent":
+            try:
+                value = normalize_accent(value)
+            except ValueError as error:
+                return web.json_response({"ok": False, "error": str(error)}, status=400)
+        self.store.set_preference(int(user["id"]), key, value)
         return web.json_response({"ok": True, "preferences": self.store.preferences(int(user["id"]))})
 
     def auth_error(self, exc: AuthError):
