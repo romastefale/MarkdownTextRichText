@@ -6,6 +6,9 @@ import os
 from pathlib import Path
 
 
+DEFAULT_MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+
+
 @dataclass(frozen=True)
 class Settings:
     telegram_token: str
@@ -15,6 +18,7 @@ class Settings:
     init_data_ttl_seconds: int
     telegraph_aes_key: bytes | None
     static_path: Path
+    max_upload_bytes: int
 
 
 def _token(raw: str) -> str:
@@ -37,6 +41,17 @@ def _telegraph_key() -> bytes | None:
     return key
 
 
+def _max_upload_bytes() -> int:
+    raw = (os.environ.get("MDTXTRT_MAX_UPLOAD_BYTES") or str(DEFAULT_MAX_UPLOAD_BYTES)).strip()
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise RuntimeError("MDTXTRT_MAX_UPLOAD_BYTES precisa ser um inteiro positivo.") from exc
+    if value <= 0:
+        raise RuntimeError("MDTXTRT_MAX_UPLOAD_BYTES precisa ser um inteiro positivo.")
+    return value
+
+
 def load_settings() -> Settings:
     package = Path(__file__).resolve().parent
     return Settings(
@@ -47,4 +62,5 @@ def load_settings() -> Settings:
         init_data_ttl_seconds=3600,
         telegraph_aes_key=_telegraph_key(),
         static_path=package / "static",
+        max_upload_bytes=_max_upload_bytes(),
     )
