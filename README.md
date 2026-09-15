@@ -2,21 +2,22 @@
 
 Bot Telegram e Mini App para importar, editar, visualizar, converter e publicar conteúdo Markdown (`.md`) e texto (`.txt`). O projeto usa um documento semântico compartilhado e oferece Rich Messages, HTML Telegram, MarkdownV2, exportação e publicação no Telegraph.
 
-## Estado da entrega
+## Estado do produto
 
-- código do escopo contratado: concluído;
-- gate interno, compilação Python e sintaxe JavaScript: aprovados;
+- código do produto: finalizado na linha `release/mdtxtrt-final-v2`;
+- aparência v2 aplicada: controles Rich corrigidos e preferência pessoal de sete cores;
+- gate interno, compilação Python, testes e sintaxe JavaScript fazem parte da verificação da release;
 - Telegram Bot API 10.3 e aiogram 3.31.0;
-- transporte: long polling;
-- PR de finalização: [#10](https://github.com/romastefale/MarkdownTextRichText/pull/10), sem merge automático;
-- operação real do bot: pendente de `TOKEN` e validação E2E;
-- persistência Railway: pendente de volume montado em `/data`.
+- transporte do bot: long polling;
+- versões anteriores preservadas; sem merge automático;
+- artefatos temporários de checkpoint/release não fazem parte da árvore final v2;
+- operação real exige `TOKEN`, persistência configurada e validação E2E no ambiente de produção.
 
-O estado verificável e os limites da aprovação estão em [`docs/RELEASE_STATUS.md`](docs/RELEASE_STATUS.md).
+A cronologia está em `docs/CONTINUITY.md` e a evolução visual em `docs/APPEARANCE_V2.md`.
 
 ## Execução
 
-Requer Python 3.10–3.14. A combinação validada localmente foi Python 3.12.14 com as versões fixadas em `requirements.txt`.
+Requer Python 3.10–3.14. A combinação de referência é Python 3.12 com as versões fixadas em `requirements.txt`.
 
 ```bash
 python -m venv .venv
@@ -38,17 +39,18 @@ Não grave segredos no Git, frontend ou logs.
 
 ```bash
 PYTHONPATH=. .venv/bin/python scripts/release_gate.py
-.venv/bin/python -m compileall -q mdtxtrt scripts
+.venv/bin/python -m compileall -q mdtxtrt scripts tests
+.venv/bin/python -m unittest discover -s tests
 node --check mdtxtrt/static/release.js
 git diff --check
 ```
 
-O gate valida modelos Rich Message do aiogram, seleção de renderizadores, handlers, contrato estático e os nomes `TOKEN`/`KEY`. Ele não substitui o teste real no Telegram, Telegraph e clientes móveis.
+Os gates locais não substituem teste real de Telegram, Telegraph, Mini App e clientes móveis.
 
 ## Documentação
 
-- [`docs/CONTRACT.md`](docs/CONTRACT.md): escopo funcional;
-- [`docs/IMPLEMENTATION_VERIFICATION.md`](docs/IMPLEMENTATION_VERIFICATION.md): níveis de evidência;
-- [`docs/CONTINUITY.md`](docs/CONTINUITY.md): cronologia;
-- [`docs/RESTORATION_2026-09-15.md`](docs/RESTORATION_2026-09-15.md): arquivos recuperados;
-- [`docs/CONFIGURATION_2026-09-15.md`](docs/CONFIGURATION_2026-09-15.md): configuração simplificada.
+- `docs/CONTRACT.md`: contrato funcional;
+- `docs/APPEARANCE_V2.md`: aparência e controles Rich finais;
+- `docs/IMPLEMENTATION_VERIFICATION.md`: níveis de evidência;
+- `docs/CONTINUITY.md`: cronologia completa;
+- `docs/CONFIGURATION_2026-09-15.md`: configuração operacional.
